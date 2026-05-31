@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nework IA</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #7fff6e;
+    --green-dim: #4ecf42;
+    --green-glow: rgba(127, 255, 110, 0.12);
+    --green-glow2: rgba(127, 255, 110, 0.06);
+    --black: #080808;
+    --dark: #0d0d0d;
+    --panel: #131313;
+    --panel2: #181818;
+    --border: #1e1e1e;
+    --border2: #252525;
+    --text: #e8e8e8;
+    --text2: #a0a0a0;
+    --muted: #484848;
+    --red: #ff5f5f;
+    --red-glow: rgba(255,95,95,0.12);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--dark);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+  .logo-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 10px var(--green);
+    animation: pulse 2.5s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes pulse {
+    0%,100% { box-shadow: 0 0 6px var(--green); opacity:1; }
+    50% { box-shadow: 0 0 18px var(--green); opacity:0.75; }
+  }
+  .logo-name {
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: var(--green);
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 18px rgba(127,255,110,0.35);
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-left: auto;
+  }
+  .icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    color: var(--text2);
+  }
+  .icon-btn:hover { border-color: var(--border2); color: var(--text); background: var(--panel2); }
+  .icon-btn.active, #micBtn.listening {
+    background: var(--green-glow);
+    border-color: var(--green-dim);
+    color: var(--green);
+  }
+  #micBtn.listening { animation: micPulse 1s ease-in-out infinite; }
+  @keyframes micPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(127,255,110,0.3); }
+    50% { box-shadow: 0 0 0 6px rgba(127,255,110,0); }
+  }
+  .memory-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    color: var(--green);
+    border: 1px solid var(--green-dim);
+    padding: 3px 9px;
+    border-radius: 20px;
+    background: var(--green-glow);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .memory-badge:hover { background: rgba(127,255,110,0.2); }
+
+  /* ── MEMORY PANEL ── */
+  .memory-panel {
+    position: absolute;
+    top: 56px; right: 14px;
+    width: 300px;
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 16px;
+    z-index: 100;
+    display: none;
+    animation: slideDown 0.2s ease;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .memory-panel.open { display: block; }
+  @keyframes slideDown {
+    from { opacity:0; transform:translateY(-8px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .memory-panel h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--green);
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+  .memory-empty {
+    font-size: 0.8rem;
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+    padding: 10px 0;
+  }
+  .memory-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+    font-size: 0.82rem;
+    color: var(--text2);
+    transition: all 0.2s;
+  }
+  .memory-item:hover { border-color: var(--border2); }
+  .memory-item-key {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--green-dim);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .memory-item-val { flex: 1; line-height: 1.4; }
+  .memory-item-del {
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    font-size: 0.75rem; padding: 0 2px;
+    transition: color 0.2s; flex-shrink: 0;
+  }
+  .memory-item-del:hover { color: var(--red); }
+  .memory-clear-all {
+    width: 100%;
+    margin-top: 8px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.55rem;
+    padding: 7px;
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+  .memory-clear-all:hover { border-color: var(--red); color: var(--red); background: var(--red-glow); }
+
+  /* ── MESSAGES ── */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+  }
+  #messages::-webkit-scrollbar { width: 3px; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg {
+    display: flex;
+    gap: 9px;
+    max-width: 90%;
+    animation: fadeUp 0.28s ease;
+  }
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(7px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .msg.user { margin-left: auto; flex-direction: row-reverse; }
+  .avatar {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.55rem;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    margin-top: 3px;
+  }
+  .msg.ai .avatar { background: var(--green-glow); border: 1px solid var(--green-dim); color: var(--green); }
+  .msg.user .avatar { background: #1a1a1a; border: 1px solid var(--border); color: var(--muted); }
+
+  .bubble {
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-size: 0.875rem;
+    line-height: 1.65;
+  }
+  .msg.ai .bubble {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px 14px 14px 14px;
+    color: var(--text);
+  }
+  .msg.user .bubble {
+    background: #172217;
+    border: 1px solid #253525;
+    border-radius: 14px 4px 14px 14px;
+    color: #d4f5d0;
+  }
+  .msg.error .bubble {
+    background: var(--red-glow);
+    border: 1px solid rgba(255,95,95,0.25);
+    color: #ffaaaa;
+    border-radius: 4px 14px 14px 14px;
+  }
+
+  /* ── MARKDOWN STYLES ── */
+  .bubble strong { color: var(--green); font-weight: 700; }
+  .bubble em { color: var(--text2); font-style: italic; }
+  .bubble h1,.bubble h2,.bubble h3 {
+    font-weight: 700; color: var(--green);
+    margin: 10px 0 5px; font-size: 0.95rem;
+  }
+  .bubble ul,.bubble ol {
+    padding-left: 18px; margin: 6px 0;
+  }
+  .bubble li { margin: 3px 0; }
+  .bubble a { color: var(--green-dim); text-decoration: underline; word-break: break-all; }
+  .bubble a:hover { color: var(--green); }
+  .bubble hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+  .bubble code {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem;
+    background: #0a0a0a;
+    border: 1px solid var(--border2);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--green);
+  }
+  .bubble pre {
+    background: #0a0a0a;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    margin: 8px 0;
+    position: relative;
+  }
+  .bubble pre code {
+    background: none; border: none;
+    padding: 0; font-size: 0.78rem;
+    color: #b0e8aa; display: block;
+    white-space: pre;
+  }
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px;
+    background: var(--panel2); border: 1px solid var(--border2);
+    color: var(--muted); font-family: 'Space Mono', monospace;
+    font-size: 0.5rem; padding: 3px 7px; border-radius: 5px;
+    cursor: pointer; letter-spacing: 0.08em; transition: all 0.2s;
+  }
+  .copy-btn:hover { color: var(--green); border-color: var(--green-dim); }
+  .bubble blockquote {
+    border-left: 2px solid var(--green-dim);
+    padding: 4px 12px;
+    margin: 6px 0;
+    color: var(--text2);
+    font-style: italic;
+  }
+  .bubble table {
+    border-collapse: collapse; width: 100%; margin: 8px 0;
+    font-size: 0.8rem;
+  }
+  .bubble th {
+    background: var(--panel2); color: var(--green);
+    padding: 6px 10px; border: 1px solid var(--border2);
+    font-family: 'Space Mono', monospace; font-size: 0.65rem;
+    letter-spacing: 0.05em;
+  }
+  .bubble td { padding: 5px 10px; border: 1px solid var(--border); color: var(--text2); }
+  .bubble tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+  /* ── TYPING ── */
+  .typing-bubble {
+    display: flex; align-items: center; gap: 5px; padding: 14px 16px;
+  }
+  .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--green); animation: bounce 1.3s infinite;
+  }
+  .dot:nth-child(2) { animation-delay: 0.18s; }
+  .dot:nth-child(3) { animation-delay: 0.36s; }
+  @keyframes bounce {
+    0%,60%,100% { transform:translateY(0); opacity:0.35; }
+    30% { transform:translateY(-6px); opacity:1; }
+  }
+
+  /* ── WELCOME ── */
+  .welcome {
+    text-align: center; padding: 36px 20px; margin: auto 0;
+  }
+  .welcome-name {
+    font-size: 2.8rem; font-weight: 800; color: var(--green);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 50px rgba(127,255,110,0.25);
+    line-height: 1;
+  }
+  .welcome-sub {
+    font-family: 'Space Mono', monospace; font-size: 0.6rem;
+    color: var(--muted); margin-top: 10px; letter-spacing: 0.18em;
+  }
+  .welcome-hints {
+    display: flex; flex-wrap: wrap; gap: 7px;
+    justify-content: center; margin-top: 24px;
+  }
+  .hint-chip {
+    font-size: 0.78rem; color: var(--text2);
+    background: var(--panel); border: 1px solid var(--border2);
+    padding: 7px 13px; border-radius: 20px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .hint-chip:hover { border-color: var(--green-dim); color: var(--green); background: var(--green-glow2); }
+
+  /* ── INPUT ── */
+  .input-area {
+    padding: 12px 14px;
+    border-top: 1px solid var(--border);
+    background: var(--dark);
+    display: flex; gap: 7px; align-items: flex-end;
+    flex-shrink: 0;
+  }
+  #userInput {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 0.88rem;
+    resize: none;
+    min-height: 44px;
+    max-height: 120px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    line-height: 1.5;
+  }
+  #userInput:focus {
+    border-color: var(--green-dim);
+    box-shadow: 0 0 0 2px var(--green-glow);
+  }
+  #userInput::placeholder { color: var(--muted); }
+  #sendBtn {
+    width: 44px; height: 44px; border-radius: 13px;
+    background: var(--green); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.2s;
+  }
+  #sendBtn:hover { background: #9fff91; box-shadow: 0 0 16px rgba(127,255,110,0.35); transform: scale(1.04); }
+  #sendBtn:disabled { opacity:0.25; cursor:not-allowed; transform:none; box-shadow:none; }
+
+  .speaking-indicator {
+    font-family: 'Space Mono', monospace; font-size: 0.58rem;
+    color: var(--green); text-align: center; padding: 3px;
+    letter-spacing: 0.1em; display: none;
+  }
+
+  /* ── HISTORY SIDEBAR ── */
+  .sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; width: 260px;
+    background: var(--dark); border-right: 1px solid var(--border);
+    z-index: 200; display: flex; flex-direction: column;
+    transform: translateX(-100%); transition: transform 0.25s ease;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 199; display: none;
+  }
+  .sidebar-overlay.open { display: block; }
+  .sidebar-header {
+    padding: 16px 14px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sidebar-header span {
+    font-family: 'Space Mono', monospace; font-size: 0.6rem;
+    color: var(--green); letter-spacing: 0.15em;
+  }
+  .sidebar-close {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 1rem; padding: 2px 6px;
+    transition: color 0.2s;
+  }
+  .sidebar-close:hover { color: var(--text); }
+  .sidebar-list { flex: 1; overflow-y: auto; padding: 10px 10px; }
+  .sidebar-list::-webkit-scrollbar { width: 2px; }
+  .sidebar-list::-webkit-scrollbar-thumb { background: var(--border); }
+  .history-item {
+    padding: 10px 12px; border-radius: 9px;
+    cursor: pointer; margin-bottom: 4px;
+    transition: all 0.18s; border: 1px solid transparent;
+  }
+  .history-item:hover { background: var(--panel); border-color: var(--border); }
+  .history-item.active { background: var(--green-glow); border-color: var(--green-dim); }
+  .history-item-title {
+    font-size: 0.8rem; color: var(--text2); white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .history-item.active .history-item-title { color: var(--green); }
+  .history-item-date {
+    font-family: 'Space Mono', monospace; font-size: 0.55rem;
+    color: var(--muted); margin-top: 3px;
+  }
+  .sidebar-new {
+    margin: 0 10px 12px;
+    background: var(--green-glow); border: 1px solid var(--green-dim);
+    color: var(--green); font-family: 'Space Mono', monospace;
+    font-size: 0.58rem; padding: 9px; border-radius: 9px;
+    cursor: pointer; letter-spacing: 0.1em; transition: all 0.2s;
+    width: calc(100% - 20px);
+  }
+  .sidebar-new:hover { background: rgba(127,255,110,0.2); }
+  .history-empty {
+    text-align: center; color: var(--muted); font-size: 0.78rem;
+    padding: 20px 10px; font-style: italic;
+  }
+  .history-item-row {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .history-del {
+    background: none; border: none; color: var(--muted);
+    cursor: pointer; font-size: 0.7rem; padding: 2px 4px;
+    opacity: 0; transition: all 0.15s; flex-shrink: 0;
+  }
+  .history-item:hover .history-del { opacity: 1; }
+  .history-del:hover { color: var(--red); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--panel2); border: 1px solid var(--border2);
+    color: var(--text2); font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; padding: 8px 16px; border-radius: 20px;
+    letter-spacing: 0.08em; z-index: 300;
+    animation: toastIn 0.25s ease; pointer-events: none;
+  }
+  .toast.green { color: var(--green); border-color: var(--green-dim); background: var(--green-glow); }
+  .toast.red { color: #ffaaaa; border-color: rgba(255,95,95,0.3); background: var(--red-glow); }
+  @keyframes toastIn {
+    from { opacity:0; transform: translateX(-50%) translateY(8px); }
+    to { opacity:1; transform: translateX(-50%) translateY(0); }
+  }
+
+  /* ── ROLES PANEL ── */
+  .roles-panel {
+    position: absolute;
+    top: 56px; left: 14px;
+    width: 300px;
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 16px;
+    z-index: 100;
+    display: none;
+    animation: slideDown 0.2s ease;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+  }
+  .roles-panel.open { display: block; }
+  .roles-panel h3 {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem; color: var(--green);
+    letter-spacing: 0.15em; margin-bottom: 12px;
+  }
+  .role-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 7px; margin-bottom: 10px;
+  }
+  .role-card {
+    padding: 10px 10px;
+    border-radius: 9px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: center;
+  }
+  .role-card:hover { border-color: var(--border2); background: #1f1f1f; }
+  .role-card.active { border-color: var(--green-dim); background: var(--green-glow); }
+  .role-card-icon { font-size: 1.3rem; margin-bottom: 4px; }
+  .role-card-name {
+    font-size: 0.72rem; color: var(--text2); font-weight: 600;
+    display: block;
+  }
+  .role-card.active .role-card-name { color: var(--green); }
+  .role-card-desc {
+    font-size: 0.62rem; color: var(--muted);
+    margin-top: 2px; display: block; line-height: 1.3;
+  }
+  .role-active-bar {
+    display: none; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 8px;
+    background: var(--green-glow); border: 1px solid var(--green-dim);
+    margin-bottom: 10px; font-size: 0.75rem; color: var(--green);
+  }
+  .role-active-bar.show { display: flex; }
+  .role-active-bar span { flex: 1; }
+  .role-reset-btn {
+    background: none; border: none; color: var(--green-dim);
+    cursor: pointer; font-size: 0.65rem; font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em; transition: color 0.2s;
+  }
+  .role-reset-btn:hover { color: var(--red); }
+  .role-badge {
+    font-family: 'Space Mono', monospace; font-size: 0.55rem;
+    color: var(--text2); border: 1px solid var(--border2);
+    padding: 3px 9px; border-radius: 20px;
+    background: var(--panel); cursor: pointer;
+    transition: all 0.2s; letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+  .role-badge:hover { border-color: var(--border2); color: var(--text); }
+  .role-badge.has-role { color: var(--green); border-color: var(--green-dim); background: var(--green-glow); }
+
+  /* ── SETUP SCREEN ── */
+  .setup-screen {
+    position: fixed; inset: 0;
+    background: var(--black);
+    z-index: 500;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .setup-box {
+    width: 100%; max-width: 400px;
+    background: var(--panel);
+    border: 1px solid var(--border2);
+    border-radius: 18px;
+    padding: 32px 28px;
+    animation: fadeUp 0.3s ease;
+  }
+  .setup-logo {
+    font-size: 2rem; font-weight: 800; color: var(--green);
+    letter-spacing: 0.12em;
+    text-shadow: 0 0 30px rgba(127,255,110,0.3);
+    margin-bottom: 6px;
+  }
+  .setup-sub {
+    font-family: 'Space Mono', monospace; font-size: 0.58rem;
+    color: var(--muted); letter-spacing: 0.15em; margin-bottom: 24px;
+  }
+  .setup-label {
+    font-size: 0.78rem; color: var(--text2); margin-bottom: 8px; display: block;
+  }
+  .setup-label strong { color: var(--text); }
+  .setup-input {
+    width: 100%; background: var(--panel2);
+    border: 1px solid var(--border2); border-radius: 10px;
+    padding: 11px 14px; color: var(--text);
+    font-family: 'Space Mono', monospace; font-size: 0.75rem;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 10px;
+  }
+  .setup-input:focus {
+    border-color: var(--green-dim);
+    box-shadow: 0 0 0 2px var(--green-glow);
+  }
+  .setup-input::placeholder { color: var(--muted); }
+  .setup-btn {
+    width: 100%; padding: 12px;
+    background: var(--green); border: none; border-radius: 10px;
+    color: var(--black); font-family: 'Syne', sans-serif;
+    font-size: 0.88rem; font-weight: 700; cursor: pointer;
+    transition: all 0.2s; margin-top: 4px;
+  }
+  .setup-btn:hover { background: #9fff91; box-shadow: 0 0 16px rgba(127,255,110,0.3); }
+  .setup-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .setup-link {
+    display: block; text-align: center; margin-top: 14px;
+    font-size: 0.72rem; color: var(--muted);
+  }
+  .setup-link a { color: var(--green-dim); text-decoration: none; }
+  .setup-link a:hover { color: var(--green); }
+  .setup-error {
+    font-size: 0.72rem; color: #ffaaaa;
+    background: var(--red-glow); border: 1px solid rgba(255,95,95,0.2);
+    padding: 8px 12px; border-radius: 8px; margin-bottom: 10px;
+    display: none;
+  }
+  .setup-checking {
+    font-family: 'Space Mono', monospace; font-size: 0.62rem;
+    color: var(--green); text-align: center; padding: 6px 0;
+    display: none; letter-spacing: 0.08em;
+  }
+  /* settings key btn in header */
+  .key-btn {
+    font-family: 'Space Mono', monospace; font-size: 0.52rem;
+    color: var(--muted); background: none;
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 3px 8px; cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .key-btn:hover { color: var(--text2); border-color: var(--border2); }
+
+  @media (max-width: 480px) {
+    .bubble { font-size: 0.84rem; }
+    .welcome-name { font-size: 2.2rem; }
+    .memory-panel { width: calc(100vw - 28px); right: 14px; }
+    .roles-panel { width: calc(100vw - 28px); left: 14px; }
+    .sidebar { width: 80vw; }
+    .setup-box { padding: 24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div class="setup-screen" id="setupScreen" style="display:none">
+  <div class="setup-box">
+    <div class="setup-logo">NEWORK</div>
+    <div class="setup-sub">INTELIGENCIA ARTIFICIAL</div>
+    <label class="setup-label">Para usar Nework necesitas tu <strong>API Key de OpenRouter</strong>.<br>Es gratis y solo se guarda en tu dispositivo.</label>
+    <div class="setup-error" id="setupError"></div>
+    <input class="setup-input" id="setupInput" type="password" placeholder="sk-or-v1-..." autocomplete="off" spellcheck="false"/>
+    <div class="setup-checking" id="setupChecking">● VERIFICANDO KEY...</div>
+    <button class="setup-btn" id="setupBtn">ENTRAR A NEWORK</button>
+    <span class="setup-link">
+      ¿No tienes key? <a href="https://openrouter.ai/keys" target="_blank">Consíguela gratis en openrouter.ai →</a>
+    </span>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <span>HISTORIAL</span>
+    <button class="sidebar-close" id="sidebarClose">✕</button>
+  </div>
+  <div class="sidebar-list" id="historyList"></div>
+  <button class="sidebar-new" id="newChatBtn">+ NUEVA CONVERSACIÓN</button>
+</div>
+
+<!-- ROLES PANEL -->
+<div class="roles-panel" id="rolesPanel">
+  <h3>⚡ MODO DE NEWORK</h3>
+  <div class="role-active-bar" id="roleActiveBar">
+    <span id="roleActiveText">Modo activo</span>
+    <button class="role-reset-btn" id="roleResetBtn">QUITAR ROL</button>
+  </div>
+  <div class="role-grid" id="roleGrid"></div>
+</div>
+
+<!-- MEMORY PANEL -->
+<div class="memory-panel" id="memoryPanel">
+  <h3>● MEMORIA DE NEWORK</h3>
+  <div id="memoryList"></div>
+  <button class="memory-clear-all" id="memoryClearAll">BORRAR TODA LA MEMORIA</button>
+</div>
+
+<header>
+  <button class="icon-btn" id="historyBtn" title="Historial">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="15" y2="18"/>
+    </svg>
+  </button>
+  <div class="logo-dot"></div>
+  <span class="logo-name">Nework</span>
+  <span class="role-badge" id="roleBadge" title="Cambiar modo">✦ NORMAL</span>
+  <div class="header-right">
+    <span class="memory-badge" id="memoryBadge">● MEMORIA</span>
+    <button class="key-btn" id="changeKeyBtn" title="Cambiar API Key">⚙ KEY</button>
+    <button class="icon-btn" id="micBtn" title="Hablar por voz">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div id="messages">
+  <div class="welcome" id="welcome">
+    <div class="welcome-name">NEWORK</div>
+    <div class="welcome-sub">INTELIGENCIA ARTIFICIAL · SIEMPRE LISTA</div>
+    <div class="welcome-hints">
+      <span class="hint-chip">¿Qué puedes hacer?</span>
+      <span class="hint-chip">Explícame algo</span>
+      <span class="hint-chip">Noticias de hoy</span>
+      <span class="hint-chip">Ayúdame a escribir</span>
+    </div>
+  </div>
+</div>
+
+<div class="speaking-indicator" id="speakingIndicator">🔊 NEWORK HABLANDO...</div>
+
+<div class="input-area">
+  <textarea id="userInput" placeholder="Escríbele a Nework..." rows="1"></textarea>
+  <button id="sendBtn">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#080808" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="22" y1="2" x2="11" y2="13"/>
+      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+  const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+  const APIKEY_STORAGE = 'nework_api_key';
+  function getApiKey() { return localStorage.getItem(APIKEY_STORAGE) || ''; }
+  function saveApiKey(k) { localStorage.setItem(APIKEY_STORAGE, k.trim()); }
+
+  const messagesDiv = document.getElementById('messages');
+  const userInput   = document.getElementById('userInput');
+  const sendBtn     = document.getElementById('sendBtn');
+  const micBtn      = document.getElementById('micBtn');
+  const speakingIndicator = document.getElementById('speakingIndicator');
+  const memoryPanel = document.getElementById('memoryPanel');
+  const memoryBadge = document.getElementById('memoryBadge');
+  const sidebar     = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const historyList = document.getElementById('historyList');
+
+  let conversationHistory = []; // mensajes del chat actual
+  let isListening = false;
+  let recognition = null;
+  let currentChatId = null;
+
+  // ══════════════════════════════════════════
+  // STORAGE KEYS
+  // ══════════════════════════════════════════
+  const MEMORY_KEY  = 'nework_memory_v2';
+  const CHATS_KEY   = 'nework_chats_v2';
+  const ACTIVE_KEY  = 'nework_active_chat';
+
+  // ══════════════════════════════════════════
+  // MEMORIA PERSISTENTE
+  // ══════════════════════════════════════════
+  function loadMemory() {
+    try { return JSON.parse(localStorage.getItem(MEMORY_KEY) || '{}'); }
+    catch { return {}; }
+  }
+  function saveMemory(obj) { localStorage.setItem(MEMORY_KEY, JSON.stringify(obj)); }
+
+  // Detectar datos relevantes del mensaje del usuario
+  function extractMemoryFromText(text) {
+    const mem = loadMemory();
+    let changed = false;
+
+    const patterns = [
+      { key: 'nombre', regex: /(?:me llamo|mi nombre es|soy)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ]{1,20})/i, label: 'Nombre' },
+      { key: 'edad', regex: /tengo\s+(\d{1,2})\s+años/i, label: 'Edad' },
+      { key: 'pais', regex: /(?:soy de|vivo en|estoy en)\s+([A-ZÁÉÍÓÚÑ][a-záéíóúñ\s]{2,20})/i, label: 'País/Ciudad' },
+      { key: 'trabajo', regex: /(?:trabajo (?:como|de|en)|soy)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ\s]{3,30})/i, label: 'Trabajo' },
+      { key: 'estudio', regex: /(?:estudio|estudiando)\s+([a-záéíóúñA-ZÁÉÍÓÚÑ\s]{3,30})/i, label: 'Estudios' },
+    ];
+
+    // Intereses (fútbol, música, etc.)
+    const interestWords = ['fútbol','música','cine','gaming','programación','diseño','cocina','viajes','deporte','tecnología','basketball','tenis','lectura'];
+    for (const w of interestWords) {
+      if (text.toLowerCase().includes(w) && !mem[`interes_${w}`]) {
+        mem[`interes_${w}`] = w.charAt(0).toUpperCase() + w.slice(1);
+        changed = true;
+      }
+    }
+
+    for (const p of patterns) {
+      const m = text.match(p.regex);
+      if (m && m[1] && m[1].trim().length > 1) {
+        const val = m[1].trim();
+        if (mem[p.key] !== val) { mem[p.key] = val; changed = true; }
+      }
+    }
+
+    if (changed) { saveMemory(mem); renderMemoryPanel(); updateMemoryBadge(); }
+  }
+
+  function getMemoryContext() {
+    const mem = loadMemory();
+    const entries = Object.entries(mem);
+    if (!entries.length) return '';
+    const lines = entries.map(([k, v]) => `- ${v}`);
+    return '\n\nDatos recordados del usuario (guardados entre sesiones):\n' + lines.join('\n');
+  }
+
+  function updateMemoryBadge() {
+    const mem = loadMemory();
+    const count = Object.keys(mem).length;
+    if (mem.nombre) {
+      memoryBadge.textContent = `● ${mem.nombre.toUpperCase()}`;
+    } else if (count > 0) {
+      memoryBadge.textContent = `● ${count} RECUERDOS`;
+    } else {
+      memoryBadge.textContent = '● MEMORIA';
+    }
+  }
+
+  function renderMemoryPanel() {
+    const mem = loadMemory();
+    const list = document.getElementById('memoryList');
+    const entries = Object.entries(mem);
+    if (!entries.length) {
+      list.innerHTML = '<div class="memory-empty">Nework aún no recuerda nada tuyo</div>';
+      return;
+    }
+    list.innerHTML = entries.map(([k, v]) => `
+      <div class="memory-item">
+        <span class="memory-item-key">${k.replace('interes_','').toUpperCase()}</span>
+        <span class="memory-item-val">${v}</span>
+        <button class="memory-item-del" onclick="forgetMemoryKey('${k}')">✕</button>
+      </div>
+    `).join('');
+  }
+
+  function forgetMemoryKey(key) {
+    const mem = loadMemory();
+    delete mem[key];
+    saveMemory(mem);
+    renderMemoryPanel();
+    updateMemoryBadge();
+    showToast('Recuerdo eliminado');
+  }
+
+  // ══════════════════════════════════════════
+  // HISTORIAL DE CHATS
+  // ══════════════════════════════════════════
+  function loadChats() {
+    try { return JSON.parse(localStorage.getItem(CHATS_KEY) || '{}'); }
+    catch { return {}; }
+  }
+  function saveChats(obj) { localStorage.setItem(CHATS_KEY, JSON.stringify(obj)); }
+
+  function generateChatId() { return 'chat_' + Date.now(); }
+
+  function saveChatState() {
+    if (!currentChatId || !conversationHistory.length) return;
+    const chats = loadChats();
+    const firstUser = conversationHistory.find(m => m.role === 'user');
+    chats[currentChatId] = {
+      id: currentChatId,
+      title: firstUser ? firstUser.content.slice(0, 40) : 'Conversación',
+      messages: conversationHistory,
+      date: chats[currentChatId]?.date || new Date().toISOString()
+    };
+    saveChats(chats);
+    localStorage.setItem(ACTIVE_KEY, currentChatId);
+    renderHistoryList();
+  }
+
+  function renderHistoryList() {
+    const chats = loadChats();
+    const ids = Object.keys(chats).sort((a,b) => new Date(chats[b].date) - new Date(chats[a].date));
+    if (!ids.length) {
+      historyList.innerHTML = '<div class="history-empty">Sin conversaciones guardadas</div>';
+      return;
+    }
+    historyList.innerHTML = ids.map(id => {
+      const c = chats[id];
+      const date = new Date(c.date).toLocaleDateString('es-ES', { day:'2-digit', month:'short' });
+      return `
+        <div class="history-item ${id === currentChatId ? 'active' : ''}" onclick="loadChat('${id}')">
+          <div class="history-item-row">
+            <span class="history-item-title" style="flex:1">${c.title}</span>
+            <button class="history-del" onclick="deleteChat(event,'${id}')">✕</button>
+          </div>
+          <div class="history-item-date">${date}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function loadChat(id) {
+    const chats = loadChats();
+    const chat = chats[id];
+    if (!chat) return;
+    currentChatId = id;
+    conversationHistory = chat.messages;
+    renderChatMessages();
+    localStorage.setItem(ACTIVE_KEY, id);
+    renderHistoryList();
+    closeSidebar();
+  }
+
+  function renderChatMessages() {
+    messagesDiv.innerHTML = '';
+    if (!conversationHistory.length) {
+      renderWelcome();
+      return;
+    }
+    for (const m of conversationHistory) {
+      addMessageDOM(m.role, m.content, false);
+    }
+    scrollDown();
+  }
+
+  function deleteChat(e, id) {
+    e.stopPropagation();
+    const chats = loadChats();
+    delete chats[id];
+    saveChats(chats);
+    if (currentChatId === id) startNewChat();
+    else renderHistoryList();
+    showToast('Conversación eliminada');
+  }
+
+  function startNewChat() {
+    conversationHistory = [];
+    currentChatId = generateChatId();
+    localStorage.setItem(ACTIVE_KEY, currentChatId);
+    messagesDiv.innerHTML = '';
+    renderWelcome();
+    renderHistoryList();
+    closeSidebar();
+  }
+
+  function renderWelcome() {
+    const w = document.createElement('div');
+    w.className = 'welcome'; w.id = 'welcome';
+    w.innerHTML = `
+      <div class="welcome-name">NEWORK</div>
+      <div class="welcome-sub">INTELIGENCIA ARTIFICIAL · SIEMPRE LISTA</div>
+      <div class="welcome-hints">
+        <span class="hint-chip">¿Qué puedes hacer?</span>
+        <span class="hint-chip">Explícame algo</span>
+        <span class="hint-chip">Noticias de hoy</span>
+        <span class="hint-chip">Ayúdame a escribir</span>
+      </div>
+    `;
+    messagesDiv.appendChild(w);
+    // hint chips
+    w.querySelectorAll('.hint-chip').forEach(chip => {
+      chip.addEventListener('click', () => sendMessage(chip.textContent));
+    });
+  }
+
+  // ══════════════════════════════════════════
+  // MARKDOWN PARSER
+  // ══════════════════════════════════════════
+  function parseMarkdown(text) {
+    // Escape HTML first
+    let html = text
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+
+    // Code blocks
+    html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
+      const id = 'cb_' + Math.random().toString(36).slice(2,7);
+      return `<pre id="${id}"><code class="lang-${lang}">${code.trim()}</code><button class="copy-btn" onclick="copyCode('${id}')">COPIAR</button></pre>`;
+    });
+
+    // Inline code
+    html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+
+    // Headings
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+    // Bold & italic
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+    // Blockquote
+    html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+
+    // HR
+    html = html.replace(/^---+$/gm, '<hr>');
+
+    // Tables
+    html = html.replace(/(\|.+\|\n)((\|[-:]+)+\|\n)((\|.+\|\n?)+)/g, (match) => {
+      const rows = match.trim().split('\n');
+      const header = rows[0].split('|').filter(c=>c.trim()).map(c=>`<th>${c.trim()}</th>`).join('');
+      const body = rows.slice(2).map(r => {
+        const cells = r.split('|').filter(c=>c.trim()).map(c=>`<td>${c.trim()}</td>`).join('');
+        return `<tr>${cells}</tr>`;
+      }).join('');
+      return `<table><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
+    });
+
+    // Lists
+    html = html.replace(/^(\s*)[-*] (.+)$/gm, '$1<li>$2</li>');
+    html = html.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+    // Links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+    // Line breaks
+    html = html.replace(/\n\n/g, '</p><p>');
+    html = html.replace(/\n/g, '<br>');
+
+    return `<p>${html}</p>`;
+  }
+
+  function copyCode(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const code = el.querySelector('code').textContent;
+    navigator.clipboard.writeText(code).then(() => showToast('Código copiado', 'green'));
+  }
+
+  // ══════════════════════════════════════════
+  // ROLES / SKILLS
+  // ══════════════════════════════════════════
+  const ROLES = [
+    { id: 'normal',      icon: '🤖', name: 'Normal',    desc: 'Asistente general',    prompt: '' },
+    { id: 'profesor',    icon: '📚', name: 'Profesor',   desc: 'Explica con ejemplos', prompt: 'Eres un profesor experto. Explica todo de forma clara y didáctica, usa ejemplos reales, analogías simples y asegúrate de que el usuario entienda. Si algo es complejo, divídelo en pasos. Pregunta si quedó claro.' },
+    { id: 'entrenador',  icon: '💪', name: 'Entrenador', desc: 'Fitness y salud',       prompt: 'Eres un entrenador personal experto en fitness, nutrición y salud. Das rutinas concretas, consejos de alimentación reales y motivación. Eres directo, motivador y basas tus respuestas en ciencia del deporte.' },
+    { id: 'programador', icon: '💻', name: 'Dev',        desc: 'Código y tecnología',  prompt: 'Eres un desarrollador senior full-stack. Respondes con código limpio y bien comentado, explicas el "por qué" detrás de las soluciones, señalas errores comunes y siempre sugieres la mejor práctica. Usas bloques de código con el lenguaje correcto.' },
+    { id: 'escritor',    icon: '✍️', name: 'Escritor',   desc: 'Textos y creatividad', prompt: 'Eres un escritor y comunicador experto. Ayudas a redactar, mejorar y crear cualquier tipo de texto: emails, posts, ensayos, historias, guiones. Cuidas el tono, el estilo y la claridad. Ofreces alternativas y explicas tus elecciones.' },
+    { id: 'psico',       icon: '🧠', name: 'Psicólogo',  desc: 'Apoyo emocional',      prompt: 'Eres un psicólogo empático y de escucha activa. Ayudas al usuario a reflexionar, entender sus emociones y encontrar perspectivas nuevas. Nunca juzgas, preguntas antes de dar consejos y usas un lenguaje cálido y cercano. No diagnosticas.' },
+    { id: 'negocio',     icon: '📈', name: 'Negocios',   desc: 'Estrategia y empresa', prompt: 'Eres un consultor de negocios y emprendimiento. Das consejos estratégicos, análisis de mercado, ideas de monetización y ayudas a estructurar proyectos. Eres pragmático, orientado a resultados y hablas con datos cuando puedes.' },
+    { id: 'chef',        icon: '👨‍🍳', name: 'Chef',       desc: 'Recetas y cocina',     prompt: 'Eres un chef profesional. Sugieres recetas según los ingredientes disponibles, explicas técnicas culinarias, das consejos de presentación y adaptas los platos a cualquier dieta. Eres creativo, práctico y apasionado por la cocina.' },
+  ];
+
+  let currentRole = 'normal';
+
+  function renderRoleGrid() {
+    const grid = document.getElementById('roleGrid');
+    grid.innerHTML = ROLES.map(r => `
+      <div class="role-card ${r.id === currentRole ? 'active' : ''}" onclick="setRole('${r.id}')">
+        <div class="role-card-icon">${r.icon}</div>
+        <span class="role-card-name">${r.name}</span>
+        <span class="role-card-desc">${r.desc}</span>
+      </div>
+    `).join('');
+    updateRoleActiveBar();
+  }
+
+  function setRole(id) {
+    currentRole = id;
+    const role = ROLES.find(r => r.id === id);
+    const badge = document.getElementById('roleBadge');
+    if (id === 'normal') {
+      badge.textContent = '✦ NORMAL';
+      badge.classList.remove('has-role');
+    } else {
+      badge.textContent = `${role.icon} ${role.name.toUpperCase()}`;
+      badge.classList.add('has-role');
+    }
+    renderRoleGrid();
+    document.getElementById('rolesPanel').classList.remove('open');
+    showToast(`Modo ${role.name} activado`, id !== 'normal' ? 'green' : '');
+  }
+
+  function updateRoleActiveBar() {
+    const bar = document.getElementById('roleActiveBar');
+    const txt = document.getElementById('roleActiveText');
+    const role = ROLES.find(r => r.id === currentRole);
+    if (currentRole !== 'normal') {
+      bar.classList.add('show');
+      txt.textContent = `${role.icon} Modo ${role.name} activo`;
+    } else {
+      bar.classList.remove('show');
+    }
+  }
+
+  function getRolePrompt() {
+    const role = ROLES.find(r => r.id === currentRole);
+    return role?.prompt ? '\n\nModo especial activo — comportate así:\n' + role.prompt : '';
+  }
+
+  document.getElementById('roleBadge').addEventListener('click', (e) => {
+    e.stopPropagation();
+    renderRoleGrid();
+    document.getElementById('rolesPanel').classList.toggle('open');
+    document.getElementById('memoryPanel').classList.remove('open');
+  });
+  document.addEventListener('click', (e) => {
+    const rp = document.getElementById('rolesPanel');
+    if (rp && !rp.contains(e.target) && e.target !== document.getElementById('roleBadge')) {
+      rp.classList.remove('open');
+    }
+  });
+  document.getElementById('roleResetBtn').addEventListener('click', () => setRole('normal'));
+
+  // ══════════════════════════════════════════
+  // SYSTEM PROMPT
+  // ══════════════════════════════════════════
+  const today = new Date().toLocaleDateString('es-ES', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+
+  function buildSystemPrompt() {
+    return `Hoy es ${today}. Eres Nework, una IA asistente general creada como un proyecto personal con mucho esfuerzo por su creador. Representas un logro propio construido desde cero.
+
+Personalidad:
+- Eres amigable, cercana, natural y con personalidad propia
+- Hablas siempre en español, de forma fluida y humana
+- Eres directa y útil sin rodeos innecesarios
+- Puedes bromear, motivar y conectar emocionalmente con el usuario
+- Dominas cualquier tema: deporte, tecnología, consejos, creatividad, organización, aprendizaje, etc.
+- Tienes acceso a internet en tiempo real — úsalo para noticias, resultados, clima y todo lo actual
+- NUNCA inventes información ni URLs. Si no encuentras algo, dilo honestamente
+- Si buscas en internet, menciona brevemente la fuente
+
+Formato de respuestas:
+- Usa Markdown: **negritas** para destacar, listas cuando ayuden, bloques de código con \`\`\` cuando sea código
+- Sé conciso pero completo — ni demasiado largo ni demasiado corto
+- Emojis con moderación, solo cuando aporten al tono
+- Para voz: responde más corto y conversacional
+
+Memoria:
+- Recuerdas todo lo hablado en la sesión
+- Si el usuario te dijo algo importante antes (incluso en sesiones anteriores), lo usas de forma natural${getMemoryContext()}${getRolePrompt()}`;
+  }
+
+  // ══════════════════════════════════════════
+  // UI HELPERS
+  // ══════════════════════════════════════════
+  function scrollDown() {
+    requestAnimationFrame(() => { messagesDiv.scrollTop = messagesDiv.scrollHeight; });
+  }
+
+  function showToast(msg, type = '') {
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2200);
+  }
+
+  function addMessageDOM(role, text, animate = true) {
+    const isAI = role === 'assistant';
+    const isError = role === 'error';
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+
+    const div = document.createElement('div');
+    div.className = `msg ${isAI || isError ? 'ai' : 'user'}${isError ? ' error' : ''}`;
+    if (!animate) div.style.animation = 'none';
+
+    const bubbleContent = isAI ? parseMarkdown(text) : text.replace(/\n/g,'<br>');
+    div.innerHTML = `
+      <div class="avatar">${isAI || isError ? 'NW' : 'TÚ'}</div>
+      <div class="bubble">${bubbleContent}</div>
+    `;
+    messagesDiv.appendChild(div);
+    scrollDown();
+  }
+
+  function showTyping() {
+    const div = document.createElement('div');
+    div.className = 'msg ai'; div.id = 'typing';
+    div.innerHTML = `<div class="avatar">NW</div><div class="bubble typing-bubble"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+    messagesDiv.appendChild(div);
+    scrollDown();
+  }
+  function removeTyping() { document.getElementById('typing')?.remove(); }
+
+  // ══════════════════════════════════════════
+  // SPEAK
+  // ══════════════════════════════════════════
+  function speak(text) {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const clean = text.replace(/<[^>]+>/g,' ').replace(/[*_#`]/g,'').slice(0,500);
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = 'es-ES'; utterance.rate = 1.05; utterance.pitch = 1;
+    const voices = window.speechSynthesis.getVoices();
+    const esVoice = voices.find(v => v.lang.startsWith('es'));
+    if (esVoice) utterance.voice = esVoice;
+    utterance.onstart = () => { speakingIndicator.style.display = 'block'; };
+    utterance.onend = utterance.onerror = () => { speakingIndicator.style.display = 'none'; };
+    window.speechSynthesis.speak(utterance);
+  }
+
+  // ══════════════════════════════════════════
+  // AUTO TITLE
+  // ══════════════════════════════════════════
+  async function generateChatTitle(userMsg, aiReply) {
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getApiKey()}`,
+          'HTTP-Referer': 'https://neworke.netlify.app',
+          'X-Title': 'Nework IA'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.0-flash-001',
+          max_tokens: 20,
+          messages: [
+            { role: 'system', content: 'Genera un título MUY corto (máx 5 palabras, sin comillas, sin punto) que resuma de qué trata esta conversación. Solo el título, nada más.' },
+            { role: 'user', content: `Usuario: ${userMsg.slice(0,200)}\nNework: ${aiReply.slice(0,200)}` }
+          ]
+        })
+      });
+      const data = await res.json();
+      return data.choices?.[0]?.message?.content?.trim() || userMsg.slice(0, 35);
+    } catch {
+      return userMsg.slice(0, 35);
+    }
+  }
+
+  // ══════════════════════════════════════════
+  // SEND MESSAGE (con streaming)
+  // ══════════════════════════════════════════
+  async function sendMessage(text) {
+    if (!text.trim()) return;
+    userInput.value = '';
+    userInput.style.height = 'auto';
+    sendBtn.disabled = true;
+
+    addMessageDOM('user', text);
+    conversationHistory.push({ role: 'user', content: text });
+    extractMemoryFromText(text);
+    showTyping();
+
+    const isFirstMessage = conversationHistory.filter(m => m.role === 'user').length === 1;
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${getApiKey()}`,
+          'HTTP-Referer': 'https://neworke.netlify.app',
+          'X-Title': 'Nework IA'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.0-flash-001',
+          stream: true,
+          messages: [
+            { role: 'system', content: buildSystemPrompt() },
+            ...conversationHistory
+          ],
+          plugins: [{ id: 'web' }]
+        })
+      });
+
+      if (!res.ok) {
+        removeTyping();
+        const err = await res.json().catch(() => ({}));
+        addMessageDOM('error', `⚠ ${err?.error?.message || `Error ${res.status}`}`);
+        sendBtn.disabled = false;
+        return;
+      }
+
+      // Crear burbuja de streaming
+      removeTyping();
+      const welcome = document.getElementById('welcome');
+      if (welcome) welcome.remove();
+
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'msg ai';
+      msgDiv.innerHTML = `<div class="avatar">NW</div><div class="bubble" id="streamBubble"></div>`;
+      messagesDiv.appendChild(msgDiv);
+
+      const streamBubble = document.getElementById('streamBubble');
+      let fullText = '';
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(l => l.startsWith('data: '));
+
+        for (const line of lines) {
+          const json = line.replace('data: ', '').trim();
+          if (json === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(json);
+            const delta = parsed.choices?.[0]?.delta?.content || '';
+            if (delta) {
+              fullText += delta;
+              streamBubble.innerHTML = parseMarkdown(fullText);
+              scrollDown();
+            }
+          } catch {}
+        }
+      }
+
+      // Guardar respuesta final
+      conversationHistory.push({ role: 'assistant', content: fullText });
+
+      // Título automático en primera respuesta
+      if (isFirstMessage) {
+        const title = await generateChatTitle(text, fullText);
+        const chats = loadChats();
+        if (chats[currentChatId]) {
+          chats[currentChatId].title = title;
+          saveChats(chats);
+        }
+      }
+
+      saveChatState();
+      speak(fullText);
+
+    } catch (err) {
+      removeTyping();
+      if (!navigator.onLine || err.message.toLowerCase().includes('failed to fetch')) {
+        addMessageDOM('error', '⚠ Sin conexión a internet. Revisa tu red e intenta de nuevo.');
+      } else {
+        addMessageDOM('error', `⚠ ${err.message}`);
+      }
+    }
+
+    sendBtn.disabled = false;
+    userInput.focus();
+  }
+
+  // ══════════════════════════════════════════
+  // SIDEBAR
+  // ══════════════════════════════════════════
+  function openSidebar() { sidebar.classList.add('open'); sidebarOverlay.classList.add('open'); }
+  function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('open'); }
+
+  document.getElementById('historyBtn').addEventListener('click', () => {
+    renderHistoryList();
+    openSidebar();
+  });
+  document.getElementById('sidebarClose').addEventListener('click', closeSidebar);
+  sidebarOverlay.addEventListener('click', closeSidebar);
+  document.getElementById('newChatBtn').addEventListener('click', startNewChat);
+
+  // ══════════════════════════════════════════
+  // MEMORY PANEL TOGGLE
+  // ══════════════════════════════════════════
+  memoryBadge.addEventListener('click', (e) => {
+    e.stopPropagation();
+    renderMemoryPanel();
+    memoryPanel.classList.toggle('open');
+  });
+  document.addEventListener('click', (e) => {
+    if (!memoryPanel.contains(e.target) && e.target !== memoryBadge) {
+      memoryPanel.classList.remove('open');
+    }
+  });
+  document.getElementById('memoryClearAll').addEventListener('click', () => {
+    if (confirm('¿Borrar toda la memoria de Nework?')) {
+      saveMemory({});
+      renderMemoryPanel();
+      updateMemoryBadge();
+      showToast('Memoria borrada', 'red');
+    }
+  });
+
+  // ══════════════════════════════════════════
+  // SPEECH RECOGNITION
+  // ══════════════════════════════════════════
+  function setupSpeechRecognition() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { micBtn.style.opacity = '0.3'; micBtn.title = 'Voz no disponible'; return; }
+    recognition = new SR();
+    recognition.lang = 'es-ES'; recognition.continuous = false; recognition.interimResults = false;
+    recognition.onresult = (e) => sendMessage(e.results[0][0].transcript);
+    recognition.onend = () => { isListening = false; micBtn.classList.remove('listening'); };
+    recognition.onerror = () => { isListening = false; micBtn.classList.remove('listening'); };
+  }
+
+  micBtn.addEventListener('click', () => {
+    if (!recognition) return;
+    if (window.speechSynthesis.speaking) { window.speechSynthesis.cancel(); speakingIndicator.style.display = 'none'; }
+    if (isListening) { recognition.stop(); }
+    else { isListening = true; micBtn.classList.add('listening'); recognition.start(); }
+  });
+
+  // ══════════════════════════════════════════
+  // INPUT HANDLERS
+  // ══════════════════════════════════════════
+  userInput.addEventListener('input', () => {
+    userInput.style.height = 'auto';
+    userInput.style.height = Math.min(userInput.scrollHeight, 120) + 'px';
+  });
+  userInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(userInput.value); }
+  });
+  sendBtn.addEventListener('click', () => sendMessage(userInput.value));
+
+  // Hint chips on welcome
+  document.querySelectorAll('.hint-chip').forEach(chip => {
+    chip.addEventListener('click', () => sendMessage(chip.textContent));
+  });
+
+  // ══════════════════════════════════════════
+  // SETUP SCREEN (API KEY)
+  // ══════════════════════════════════════════
+  async function validateAndSaveKey(key) {
+    const errEl   = document.getElementById('setupError');
+    const checkEl = document.getElementById('setupChecking');
+    const btn     = document.getElementById('setupBtn');
+    errEl.style.display = 'none';
+    checkEl.style.display = 'block';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${key}`,
+          'HTTP-Referer': 'https://neworke.netlify.app',
+          'X-Title': 'Nework IA'
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.0-flash-001',
+          max_tokens: 5,
+          messages: [{ role: 'user', content: 'hi' }]
+        })
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message || 'Key inválida');
+      // Key válida
+      saveApiKey(key);
+      document.getElementById('setupScreen').style.display = 'none';
+      initApp();
+    } catch (e) {
+      errEl.textContent = '⚠ ' + (e.message.includes('401') ? 'API Key incorrecta. Verifica que la copiaste bien.' : e.message);
+      errEl.style.display = 'block';
+    } finally {
+      checkEl.style.display = 'none';
+      btn.disabled = false;
+    }
+  }
+
+  function showSetupScreen() {
+    document.getElementById('setupScreen').style.display = 'flex';
+    document.getElementById('setupInput').value = '';
+    document.getElementById('setupError').style.display = 'none';
+  }
+
+  document.getElementById('setupBtn').addEventListener('click', () => {
+    const key = document.getElementById('setupInput').value.trim();
+    if (!key.startsWith('sk-or-')) {
+      document.getElementById('setupError').textContent = '⚠ La key debe empezar con sk-or-';
+      document.getElementById('setupError').style.display = 'block';
+      return;
+    }
+    validateAndSaveKey(key);
+  });
+  document.getElementById('setupInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('setupBtn').click();
+  });
+  document.getElementById('changeKeyBtn').addEventListener('click', showSetupScreen);
+
+  // ══════════════════════════════════════════
+  // INIT
+  // ══════════════════════════════════════════
+  function initApp() {
+    if (window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => {};
+    setupSpeechRecognition();
+    updateMemoryBadge();
+    const lastChatId = localStorage.getItem(ACTIVE_KEY);
+    const chats = loadChats();
+    if (lastChatId && chats[lastChatId] && chats[lastChatId].messages.length) {
+      currentChatId = lastChatId;
+      conversationHistory = chats[lastChatId].messages;
+      renderChatMessages();
+    } else {
+      currentChatId = generateChatId();
+    }
+    renderHistoryList();
+  }
+
+  // Arranque
+  if (getApiKey()) {
+    initApp();
+  } else {
+    showSetupScreen();
+  }
+</script>
+</body>
+</html>
